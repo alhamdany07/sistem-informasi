@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analisis Rekomendasi - PustakaMatch</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        /* ─── ROOT TOKENS ─── */
+        :root {
+            --radius-card: 20px;
+            --radius-btn: 12px;
+            --radius-nav: 20px;
+            
+            --blur-glass: blur(40px) saturate(200%);
+            --blur-nav: blur(50px) saturate(200%);
+            --blur-panel: blur(30px) saturate(180%);
+
+            /* DARK MODE */
+            --bg-base: #05050f;
+            --bg-surface: rgba(255, 255, 255, 0.04);
+            --bg-surface-hover: rgba(255, 255, 255, 0.08);
+            --bg-inner: rgba(255, 255, 255, 0.03);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(16, 185, 129, 0.3);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-tertiary: #64748b;
+            --accent-indigo: #6366f1;
+            --accent-indigo-soft: rgba(99,102,241,0.12);
+            --accent-emerald: #10b981;
+            --accent-emerald-soft: rgba(16,185,129,0.10);
+            --accent-amber: #f59e0b;
+            --nav-bg: rgba(5, 5, 15, 0.5);
+            
+            --panel-shadow: 0 16px 48px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.1);
+            --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.1), inset 0 -1px 1px rgba(0, 0, 0, 0.2);
+            --card-shadow-hover: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(16, 185, 129, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+        }
+
+        body.light {
+            --bg-base: #f4f5f8;
+            --bg-surface: rgba(255, 255, 255, 0.6);
+            --bg-surface-hover: rgba(255, 255, 255, 0.9);
+            --bg-inner: rgba(255, 255, 255, 0.7);
+            --border-subtle: rgba(255, 255, 255, 0.8);
+            --border-hover: rgba(5, 150, 105, 0.4);
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-tertiary: #94a3b8;
+            --accent-indigo: #4f46e5;
+            --accent-emerald: #059669;
+            --nav-bg: rgba(244, 245, 248, 0.6);
+            
+            --panel-shadow: 0 16px 48px rgba(79,70,229,0.08), inset 0 1px 2px rgba(255,255,255,1);
+            --card-shadow: 0 8px 32px rgba(30, 41, 59, 0.05), inset 0 1px 2px rgba(255, 255, 255, 1), inset 0 -1px 1px rgba(0, 0, 0, 0.02);
+            --card-shadow-hover: 0 20px 48px rgba(5, 150, 105, 0.15), 0 0 0 1px rgba(5, 150, 105, 0.3), inset 0 1px 2px rgba(255, 255, 255, 1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body { font-family: 'Inter', sans-serif; background: var(--bg-base); color: var(--text-primary); min-height: 100vh; overflow-x: hidden; transition: background 0.4s ease, color 0.4s ease; display: flex; flex-direction: column; }
+
+        /* ─── ANIMATED BACKGROUND ─── */
+        .bg-mesh { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+        .mesh-orb { position: absolute; border-radius: 50%; filter: blur(120px); will-change: transform; }
+        .mesh-orb-1 { width: 650px; height: 650px; top: -180px; left: -120px; background: radial-gradient(circle, rgba(99,102,241,0.2) 0%, transparent 70%); animation: orb-float-1 20s ease-in-out infinite; }
+        .mesh-orb-2 { width: 500px; height: 500px; top: 30%; right: -80px; background: radial-gradient(circle, rgba(168,85,247,0.15) 0%, transparent 70%); animation: orb-float-2 25s ease-in-out infinite; }
+        .mesh-orb-3 { width: 550px; height: 550px; bottom: -80px; left: 25%; background: radial-gradient(circle, rgba(16,185,129,0.12) 0%, transparent 70%); animation: orb-float-3 28s ease-in-out infinite; }
+
+        body.light .mesh-orb-1 { background: radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%); }
+        body.light .mesh-orb-2 { background: radial-gradient(circle, rgba(168,85,247,0.08) 0%, transparent 70%); }
+        body.light .mesh-orb-3 { background: radial-gradient(circle, rgba(16,185,129,0.08) 0%, transparent 70%); }
+
+        @keyframes orb-float-1 { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(20px, 55px) scale(0.97); } }
+        @keyframes orb-float-2 { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(35px, -25px) scale(0.96); } }
+        @keyframes orb-float-3 { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(-50px, 25px) scale(0.95); } }
+
+        /* ─── GLASS COMPONENTS ─── */
+        .glass-nav { background: var(--nav-bg); backdrop-filter: var(--blur-nav); -webkit-backdrop-filter: var(--blur-nav); border: 1px solid var(--border-subtle); box-shadow: 0 1px 0 rgba(255,255,255,0.04), 0 8px 40px rgba(0,0,0,0.22); }
+        body.light .glass-nav { box-shadow: 0 1px 0 rgba(255,255,255,0.8), 0 4px 24px rgba(79,70,229,0.07); }
+
+        /* iOS SLIDE TOGGLE */
+        .theme-switch { width: 52px; height: 28px; background: rgba(255,255,255,0.15); border-radius: 30px; position: relative; cursor: pointer; transition: background 0.4s ease; border: 1px solid rgba(255,255,255,0.05); box-shadow: inset 0 1px 4px rgba(0,0,0,0.2); }
+        body.light .theme-switch { background: #34c759; border-color: #34c759; box-shadow: inset 0 1px 4px rgba(0,0,0,0.1); }
+        .theme-slider { position: absolute; top: 1px; left: 2px; width: 24px; height: 24px; background: #ffffff; border-radius: 50%; transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
+        body.light .theme-slider { transform: translateX(22px); }
+        .theme-slider svg { width: 14px; height: 14px; transition: color 0.4s ease; }
+        #moon-icon { display: block; color: #1e1b4b; }
+        #sun-icon { display: none; color: #f59e0b; }
+        body.light #moon-icon { display: none; }
+        body.light #sun-icon { display: block; }
+
+        .glass-panel { background: var(--bg-surface); backdrop-filter: var(--blur-panel); -webkit-backdrop-filter: var(--blur-panel); border: 1px solid var(--border-subtle); box-shadow: var(--panel-shadow); border-radius: 30px; transition: background 0.4s ease, border-color 0.3s ease; overflow: hidden; }
+        .glass-inner { background: var(--bg-inner); backdrop-filter: blur(16px); border: 1px solid var(--border-subtle); border-radius: 20px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.05); }
+
+        /* ─── REVIEW GRID PAGINATION (BARU & LEBIH RAPI) ─── */
+        .review-wrapper { width: 100%; position: relative; }
+        .review-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+        @media (min-width: 600px) { .review-grid { grid-template-columns: 1fr 1fr; } }
+        
+        .review-card { 
+            background: var(--bg-inner); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 12px; font-size: 12px; transition: background 0.4s ease; box-shadow: inset 0 1px 1px rgba(255,255,255,0.05); 
+            height: max-content; /* Fit text nicely */
+            word-break: break-word; /* Cegah meluber */
+            display: none; /* Disembunyikan dulu oleh JS */
+        }
+        
+        /* Animasi Transisi Halaman Ulasan */
+        .review-card.active { display: block; animation: fadeInUp 0.4s ease forwards; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .review-new { border-color: rgba(99,102,241,0.4) !important; background: rgba(99,102,241,0.08) !important; }
+        body.light .review-new { background: rgba(79,70,229,0.08) !important; }
+
+        /* Tombol Next Prev Ulasan */
+        .review-pagination { display: flex; justify-content: space-between; align-items: center; padding-top: 8px; border-top: 1px dashed var(--border-subtle); }
+        .btn-page { background: var(--bg-surface); border: 1px solid var(--border-subtle); color: var(--text-secondary); padding: 6px 14px; border-radius: 8px; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+        .btn-page:hover:not(:disabled) { background: var(--accent-indigo); color: white; border-color: var(--accent-indigo); }
+        .btn-page:disabled { opacity: 0.4; cursor: not-allowed; }
+        .page-info { font-size: 11px; color: var(--text-tertiary); font-weight: 600; }
+
+        /* ─── UNIFORM CARDS (RECOMMENDATION RESULTS - 2 Kolom Mobile) ─── */
+        .rec-grid { display: grid; gap: 12px; align-items: stretch; grid-template-columns: repeat(2, 1fr); }
+        @media (min-width: 600px) { .rec-grid { grid-template-columns: repeat(3,1fr); gap: 16px;} }
+        @media (min-width: 1024px){ .rec-grid { grid-template-columns: repeat(4,1fr); } }
+
+        .rec-card { background: var(--bg-surface); backdrop-filter: var(--blur-glass); -webkit-backdrop-filter: var(--blur-glass); border: 1px solid var(--border-subtle); box-shadow: var(--card-shadow); border-radius: var(--radius-card); padding: 12px; display: flex; flex-direction: column; height: 100%; transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1); }
+        .rec-card:hover { transform: translateY(-8px) scale(1.02); border-color: var(--border-hover); box-shadow: var(--card-shadow-hover); background: var(--bg-surface-hover); }
+
+        .card-content { display: flex; flex-direction: column; flex-grow: 1; margin-top: 12px; gap: 6px; }
+        .book-title { font-size: 13px; font-weight: 700; color: var(--text-primary); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; min-height: 2.8em; }
+        @media (min-width: 600px) { .book-title { font-size: 14px; } .rec-card { padding: 14px; } }
+
+        .book-cover-sm { position: relative; overflow: hidden; border-radius: 12px; aspect-ratio: 3 / 4; background: rgba(0,0,0,0.1); width: 100%; }
+        .book-cover-sm img { width: 100%; height: 100%; object-fit: cover; opacity: 0.9; transition: transform 0.6s cubic-bezier(0.16,1,0.3,1), opacity 0.3s ease; }
+        .rec-card:hover .book-cover-sm img { transform: scale(1.08); opacity: 1; }
+        .book-cover-sm::after { content:''; position:absolute; inset:0; background: linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 60%); }
+        body.light .book-cover-sm::after { background: linear-gradient(to top, rgba(15, 23, 42, 0.3) 0%, transparent 60%); }
+
+        /* ─── SCROLL REVEAL (Diperbaiki agar repeat terus) ─── */
+        .reveal, .reveal-left, .reveal-right, .reveal-scale { opacity: 0; transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
+        .reveal { transform: translateY(40px); }
+        .reveal-left { transform: translateX(-40px); }
+        .reveal-right { transform: translateX(40px); }
+        .reveal-scale { transform: scale(0.9) translateY(20px); }
+        .reveal.in, .reveal-left.in, .reveal-right.in, .reveal-scale.in { opacity: 1; transform: none; }
+
+        /* ─── TYPOGRAPHY & UI ELEMENTS ─── */
+        .eyebrow { font-size: 10px; font-weight: 800; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent-indigo); background: var(--accent-indigo-soft); border: 1px solid rgba(99,102,241,0.20); padding: 6px 14px; border-radius: 100px; display: inline-block; margin-bottom: 14px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.1); }
+        body.light .eyebrow { border-color: rgba(79,70,229,0.22); box-shadow: inset 0 1px 1px rgba(255,255,255,0.8); }
+
+        .section-label { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 800; color: var(--text-primary); margin-bottom: 20px; }
+        @media (min-width: 600px) { .section-label { font-size: 20px; margin-bottom: 24px; } }
+        .section-label::before { content: ''; display: block; width: 4px; height: 24px; border-radius: 5px; background: linear-gradient(to bottom, #34d399, #10b981); flex-shrink: 0; }
+        @media (min-width: 600px) { .section-label::before { width: 5px; height: 28px; } }
+        body.light .section-label::before { background: linear-gradient(to bottom, #10b981, #059669); }
+
+        .book-cover-lg { width: 100%; max-width: 200px; aspect-ratio: 3/4; border-radius: 16px; overflow: hidden; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 32px 64px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.2); }
+        @media (min-width: 768px) { .book-cover-lg { max-width: 240px; border-radius: 20px;} }
+        body.light .book-cover-lg { border-color: rgba(79,70,229,0.15); box-shadow: 0 24px 48px rgba(79,70,229,0.15), inset 0 1px 2px rgba(255,255,255,1); }
+        .book-cover-lg img { width:100%; height:100%; object-fit:cover; }
+
+        .stat-card { background: var(--bg-inner); border: 1px solid var(--border-subtle); border-radius: 16px; padding: 12px 10px; text-align: center; transition: background 0.4s ease; box-shadow: inset 0 1px 1px rgba(255,255,255,0.05); }
+        .stat-val { font-size: 20px; font-weight: 900; line-height: 1; margin-top: 8px; }
+        @media (min-width: 768px) { .stat-val { font-size: 24px; margin-top: 10px; } .stat-card { padding: 16px 12px; border-radius: 20px;} }
+        .stat-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-tertiary); }
+        @media (min-width: 768px) { .stat-label { font-size: 10px; } }
+        .stat-sub { font-size: 9px; color: var(--text-tertiary); margin-top: 4px; }
+
+        .progress-track { width: 100%; height: 6px; background: rgba(255,255,255,0.08); border-radius: 99px; overflow: hidden; margin-top: 8px; box-shadow: inset 0 1px 2px rgba(0,0,0,0.2); }
+        body.light .progress-track { background: rgba(99,102,241,0.1); box-shadow: inset 0 1px 2px rgba(0,0,0,0.05); }
+        .progress-fill { height: 100%; border-radius: 99px; transform: scaleX(0); transform-origin: left; transition: transform 1.2s cubic-bezier(0.16,1,0.3,1); }
+        .progress-fill.animated { transform: scaleX(1); }
+
+        .form-input { width: 100%; background: var(--bg-inner); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 10px 14px; font-size: 12px; color: var(--text-primary); font-family: inherit; outline: none; transition: all 0.3s ease; box-shadow: inset 0 1px 2px rgba(0,0,0,0.1); }
+        body.light .form-input { box-shadow: inset 0 1px 2px rgba(0,0,0,0.02); }
+        .form-input::placeholder { color: var(--text-tertiary); }
+        .form-input:focus { border-color: rgba(99,102,241,0.6); box-shadow: 0 0 0 4px rgba(99,102,241,0.15), inset 0 1px 2px rgba(0,0,0,0.1); }
+
+        .btn-back { font-size: 12px; font-weight: 600; color: var(--text-secondary); background: var(--bg-surface); border: 1px solid var(--border-subtle); padding: 8px 14px; border-radius: 12px; text-decoration: none; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; }
+        .btn-back:hover { background: var(--bg-surface-hover); color: var(--text-primary); border-color: var(--border-hover); transform: translateY(-2px); }
+
+        .btn-submit { background: linear-gradient(135deg, #6366f1, #4f46e5); border: none; border-radius: var(--radius-btn); padding: 10px 20px; font-size: 12px; font-weight: 700; color: white; cursor: pointer; flex-shrink: 0; transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1); letter-spacing: 0.02em; box-shadow: 0 4px 12px rgba(99,102,241,0.3); }
+        .btn-submit:hover { transform: scale(1.05); box-shadow: 0 8px 24px rgba(99,102,241,0.5); }
+        body.light .btn-submit { background: linear-gradient(135deg, #4f46e5, #4338ca); }
+
+        .btn-rec { display: block; text-align: center; padding: 10px 0; border-radius: 12px; font-size: 11px; font-weight: 600; color: var(--text-secondary); text-decoration: none; background: var(--bg-inner); border: 1px solid var(--border-subtle); transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1); margin-top: 12px; }
+        .btn-rec:hover { background: rgba(16,185,129,0.8); border-color: rgba(16,185,129,1); color: white; transform: scale(1.03); box-shadow: 0 8px 20px rgba(16,185,129,0.25); }
+        body.light .btn-rec { color: var(--accent-emerald); border-color: rgba(5,150,105,0.2); background: rgba(5,150,105,0.05); }
+        body.light .btn-rec:hover { background: #059669; border-color: #047857; color: white; }
+        @media (min-width: 600px) { .btn-rec { font-size: 12px; padding: 12px 0; } }
+
+        .badge-sm { position: absolute; bottom: 8px; left: 8px; z-index: 2; background: rgba(0,0,0,0.6); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(16,185,129,0.4); padding: 4px 8px; border-radius: 8px; font-size: 9px; font-weight: 800; color: #34d399; letter-spacing: 0.1em; text-transform: uppercase; }
+        body.light .badge-sm { background: rgba(255,255,255,0.9); color: #059669; border-color: rgba(5,150,105,0.3); }
+
+        .badge-id { font-size: 10px; font-weight: 600; color: var(--text-tertiary); background: var(--bg-inner); border: 1px solid var(--border-subtle); padding: 4px 10px; border-radius: 8px; display: none;}
+        @media (min-width: 480px) { .badge-id { display: block; } }
+
+        .pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent-amber); position: relative; display: inline-block; }
+        .pulse-dot::before { content: ''; position: absolute; inset: -5px; border-radius: 50%; background: rgba(245,158,11,0.4); animation: pulse-ring 2s ease-out infinite; }
+        @keyframes pulse-ring { 0% { transform: scale(0.7); opacity: 1; } 100% { transform: scale(2.2); opacity: 0; } }
+
+        .genre-tag { display: inline-block; font-size: 10px; font-weight: 600; color: var(--accent-emerald); background: var(--accent-emerald-soft); border: 1px solid rgba(16,185,129,0.2); padding: 4px 12px; border-radius: 100px; width: fit-content; margin-top: auto;}
+        body.light .genre-tag { border-color: rgba(5,150,105,0.24); }
+
+        .separator { height: 1px; background: linear-gradient(to right, transparent, var(--border-subtle), transparent); margin: 40px 0; }
+        
+        .stat-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+        @media (min-width: 768px) { .stat-grid { gap: 14px; } }
+
+        .detail-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+        @media (min-width: 900px) { .detail-grid { grid-template-columns: 1.2fr 2fr; gap: 32px;} }
+        
+        .content-wrapper { flex: 1; position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 24px 16px 60px; width: 100%; }
+        @media (min-width: 768px) { .content-wrapper { padding: 40px 20px 80px; } }
+
+        /* ─── FOOTER STYLES ─── */
+        .glass-footer { background: var(--bg-surface); backdrop-filter: var(--blur-glass); -webkit-backdrop-filter: var(--blur-glass); border-top: 1px solid var(--border-subtle); padding: 40px 20px 24px; margin-top: auto; position: relative; z-index: 10; }
+        .footer-content { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 30px; }
+        @media (min-width: 768px) { .footer-content { flex-direction: row; justify-content: space-between; gap: 40px; } }
+        .footer-brand { flex: 1; }
+        .footer-title { font-size: 20px; font-weight: 900; color: var(--text-primary); letter-spacing: -0.03em; margin-bottom: 12px; }
+        .footer-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.6; max-width: 300px; }
+        .footer-team { flex: 1; }
+        .footer-team-title { font-size: 14px; font-weight: 700; color: var(--text-primary); margin-bottom: 16px; letter-spacing: 0.05em; text-transform: uppercase; }
+        .team-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+        .team-list li { font-size: 13px; color: var(--text-secondary); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-subtle); transition: background 0.3s; }
+        body.light .team-list li { background: rgba(0,0,0,0.02); }
+        .team-list li:hover { background: var(--accent-indigo-soft); color: var(--text-primary); border-color: rgba(99,102,241,0.3); }
+        .team-name { font-weight: 600; }
+        .team-nim { font-family: monospace; color: var(--accent-emerald); font-weight: 700; font-size: 12px; }
+        .footer-bottom { text-align: center; border-top: 1px solid var(--border-subtle); padding-top: 20px; margin-top: 30px; font-size: 12px; color: var(--text-tertiary); }
+    </style>
+</head>
+<body>
+
+    <div class="bg-mesh">
+        <div class="mesh-orb mesh-orb-1"></div>
+        <div class="mesh-orb mesh-orb-2"></div>
+        <div class="mesh-orb mesh-orb-3"></div>
+    </div>
+
+    <!-- NAV -->
+    <div style="position:sticky;top:16px;z-index:100;max-width:1100px;margin:16px auto 0;padding:0 16px; width: 100%;">
+        <nav class="glass-nav" style="border-radius:var(--radius-nav);padding:10px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px;">
+            <a href="/" style="font-size:20px;font-weight:900;text-decoration:none;color:var(--text-primary);letter-spacing:-0.03em;flex-shrink:0;">
+                Pustaka<span style="color:var(--accent-indigo);">Match</span><span style="color:var(--accent-emerald);">.</span>
+            </a>
+            
+            <div style="display:flex;align-items:center;gap:12px;">
+                <!-- iOS Slide Toggle -->
+                <div class="theme-switch" id="theme-toggle" aria-label="Toggle theme">
+                    <div class="theme-slider">
+                        <svg id="moon-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+                        </svg>
+                        <svg id="sun-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m0 13.5V21M4.22 4.22l1.58 1.58m12.42 12.42l1.58 1.58M3 12h2.25m13.5 0H21M4.22 19.78l1.58-1.58M18.22 5.78l1.58-1.58M12 7.5a4.5 4.5 0 100 9 4.5 4.5 0 000-9z" />
+                        </svg>
+                    </div>
+                </div>
+                <a href="/" class="btn-back">←<span style="display:none;margin-left:6px;" class="nav-text">Kembali</span></a>
+                <style>@media (min-width: 480px) { .nav-text { display: inline !important; } }</style>
+            </div>
+        </nav>
+    </div>
+
+    <div class="content-wrapper">
+        {% if error %}
+        <div style="text-align:center;padding:100px 0;" class="reveal">
+            <p style="color:var(--text-secondary);font-size:16px;">Buku tidak ditemukan.</p>
+            <a href="/" style="margin-top:24px;display:inline-flex;" class="btn-back">← Kembali ke Beranda</a>
+        </div>
+        {% else %}
+
+        <!-- MAIN DETAIL GRID -->
+        <div class="detail-grid" style="margin-bottom:0;">
+
+            <!-- LEFT PANEL: Book Info -->
+            <div class="glass-panel reveal-left" style="padding:24px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:20px;">
+                <div class="book-cover-lg" style="margin:0 auto;">
+                    <img src="{{ info.cover_url }}" alt="Cover {{ info.judul }}">
+                </div>
+                <div style="width:100%;text-align:left;">
+                    <div class="eyebrow">Buku Terpilih</div>
+                    <h1 style="font-size:22px;font-weight:900;color:var(--text-primary);line-height:1.2;letter-spacing:-0.03em;margin-bottom:10px;">{{ info.judul }}</h1>
+                    <span class="genre-tag" style="margin-bottom: 20px;">{{ info.genre }}</span>
+                    <div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border-subtle);">
+                        <p style="font-size:10px;font-weight:800;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:10px;">Sinopsis</p>
+                        <p style="font-size:12px;color:var(--text-secondary);line-height:1.8;text-align:justify;">{{ info.sinopsis }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT PANEL: Dashboard -->
+            <div class="glass-panel reveal-right" style="padding:20px;display:flex;flex-direction:column;gap:20px;">
+                @media (min-width: 768px) { .glass-panel { padding: 24px; } }
+
+                <!-- Dashboard Header -->
+                <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:16px;border-bottom:1px solid var(--border-subtle);">
+                    <h3 style="font-size:14px;font-weight:800;color:var(--text-primary);display:flex;align-items:center;gap:8px;">
+                        <span class="pulse-dot"></span>
+                        Dashboard Analisis
+                    </h3>
+                    <span class="badge-id">ID: 00{{ info.id }}</span>
+                </div>
+
+                <!-- Stats -->
+                <div class="stat-grid reveal delay-1">
+                    <div class="stat-card">
+                        <p class="stat-label">Rating</p>
+                        <p class="stat-val" style="color:var(--accent-amber);">{{ info.rating }}</p>
+                        <p class="stat-sub">/ 5.0 ⭐</p>
+                    </div>
+                    <div class="stat-card">
+                        <p class="stat-label">Sentimen</p>
+                        <p class="stat-val" style="color:var(--accent-indigo);">98%</p>
+                        <p class="stat-sub">Genre Match</p>
+                    </div>
+                    <div class="stat-card">
+                        <p class="stat-label">Pembaca</p>
+                        <p class="stat-val" id="total-pembaca" style="color:var(--accent-emerald);">1,242</p>
+                        <p class="stat-sub">Total</p>
+                    </div>
+                </div>
+
+                <!-- Progress Bars -->
+                <div class="glass-inner reveal delay-2" style="padding:16px;">
+                    <p style="font-size:10px;font-weight:800;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:12px;">Bobot Kriteria Buku</p>
+
+                    <div style="margin-bottom:16px;">
+                        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:6px;">
+                            <span style="color:var(--text-secondary);font-weight:500;">Kedalaman Plot</span>
+                            <span style="color:var(--accent-indigo);font-weight:700;">{{ info.plot_weight }}%</span>
+                        </div>
+                        <div class="progress-track">
+                            <div class="progress-fill" id="bar-plot" style="width:{{ info.plot_weight }}%;background:linear-gradient(to right,#6366f1,#818cf8);"></div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:6px;">
+                            <span style="color:var(--text-secondary);font-weight:500;">Gaya Bahasa / Diksi</span>
+                            <span style="color:var(--accent-emerald);font-weight:700;">{{ info.diksi_weight }}%</span>
+                        </div>
+                        <div class="progress-track">
+                            <div class="progress-fill" id="bar-diksi" style="width:{{ info.diksi_weight }}%;background:linear-gradient(to right,#10b981,#34d399);"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CAROUSEL Reviews (Grid with Pagination) -->
+                <div class="reveal review-wrapper">
+                    <p style="font-size:10px;font-weight:800;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:12px;">Ulasan Pengguna</p>
+                    
+                    <!-- Container ulasan dibungkus Jinja -->
+                    <div id="all-reviews-data" style="display: none;">
+                        {% for u in ulasan %}
+                        <div class="review-data-item" data-user="{{ u.user }}" data-skor="{{ u.skor }}" data-komentar="{{ u.komentar }}"></div>
+                        {% endfor %}
+                    </div>
+
+                    <div id="review-grid" class="review-grid">
+                        <!-- Card ulasan akan dirender disini via JS -->
+                    </div>
+
+                    <!-- Pagination Button -->
+                    <div class="review-pagination">
+                        <button id="btn-prev-rev" class="btn-page" disabled>← Prev</button>
+                        <span id="review-page-info" class="page-info">1 / 1</span>
+                        <button id="btn-next-rev" class="btn-page" disabled>Next →</button>
+                    </div>
+                </div>
+
+                <!-- Review Form -->
+                <div style="border-top:1px solid var(--border-subtle);padding-top:16px;" class="reveal">
+                    <p style="font-size:10px;font-weight:800;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent-indigo);margin-bottom:12px;">Tulis Ulasan Baru</p>
+                    <div style="display:flex;flex-direction:column;gap:10px;">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                            <input class="form-input" id="rev-name" type="text" placeholder="Nama kamu...">
+                            <select class="form-input" id="rev-score" style="cursor:pointer;">
+                                <option value="5">⭐⭐⭐⭐⭐ (5)</option>
+                                <option value="4">⭐⭐⭐⭐ (4)</option>
+                                <option value="3">⭐⭐⭐ (3)</option>
+                            </select>
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:10px;">
+                            <input class="form-input" id="rev-comment" type="text" placeholder="Tulis komentar buku di sini...">
+                            <button class="btn-submit" style="width: 100%;" id="btn-submit-review">Kirim Ulasan</button>
+                        </div>
+                        <style>@media (min-width: 600px) { .form-desktop-row { flex-direction: row !important; } .btn-submit-wide { width: auto !important; } }</style>
+                        <script>document.currentScript.previousElementSibling.previousElementSibling.classList.add('form-desktop-row'); document.getElementById('btn-submit-review').classList.add('btn-submit-wide');</script>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="separator"></div>
+
+        <!-- RECOMMENDATION RESULTS -->
+        <section class="reveal">
+            <div class="section-label">
+                Hasil Pencarian Serupa
+            </div>
+            <div class="rec-grid">
+                {% for h in hasil %}
+                <div class="rec-card reveal-scale">
+                    <div class="book-cover-sm">
+                        <img src="{{ h.cover_url }}" alt="Cover {{ h.judul }}">
+                        <span class="badge-sm">Match</span>
+                    </div>
+                    <div class="card-content">
+                        <h3 class="book-title" title="{{ h.judul }}">{{ h.judul }}</h3>
+                        <span class="genre-tag">{{ h.genre }}</span>
+                    </div>
+                    <a href="/rekomendasi/{{ h.judul }}" class="btn-rec">Analisis Buku Ini</a>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        {% endif %}
+    </div>
+
+    <!-- FOOTER KELOMPOK -->
+    <footer class="glass-footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <div class="footer-title">
+                    Pustaka<span style="color:var(--accent-indigo);">Match</span><span style="color:var(--accent-emerald);">.</span>
+                </div>
+                <p class="footer-desc">
+                    Tugas proyek Sistem Rekomendasi Buku Sesuai Genre yang dikembangkan menggunakan metode pemfilteran presisi untuk pengalaman membaca terbaik.
+                </p>
+            </div>
+            <div class="footer-team">
+                <div class="footer-team-title">Tim Pengembang</div>
+                <ul class="team-list">
+                    <li>
+                        <span class="team-name">Putri Hikmahwati</span>
+                        <span class="team-nim">202357201012</span>
+                    </li>
+                    <li>
+                        <span class="team-name">Ratna Ayu Lestari</span>
+                        <span class="team-nim">202357201013</span>
+                    </li>
+                    <li>
+                        <span class="team-name">Vanessa H.V Amuntoda</span>
+                        <span class="team-nim">202357201021</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            &copy; 2024 PustakaMatch. All rights reserved.
+        </div>
+    </footer>
+
+    <script>
+        // INIT REVEAL SCROLL
+        function initReveal() {
+            const els = document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale');
+            const io = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    const el = entry.target;
+                    if (entry.isIntersecting) {
+                        el.classList.add('in');
+                        if (el.classList.contains('reveal-right')) {
+                            setTimeout(() => {
+                                document.querySelectorAll('.progress-fill').forEach(b => b.classList.add('animated'));
+                            }, 300);
+                        }
+                    } else {
+                        // Hilangkan class 'in' agar animasi me-reset dan trigger kembali saat discroll
+                        el.classList.remove('in');
+                    }
+                });
+            }, { threshold: 0.05, rootMargin: '0px' });
+
+            els.forEach(el => io.observe(el));
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                els.forEach(el => el.classList.add('in'));
+                document.querySelectorAll('.progress-fill').forEach(b => b.classList.add('animated'));
+            }
+        }
+        initReveal();
+
+        // THEME TOGGLE
+        const themeBtn = document.getElementById('theme-toggle');
+        function applyTheme(isLight) {
+            document.body.classList.toggle('light', isLight);
+            localStorage.setItem('pm-theme', isLight ? 'light' : 'dark');
+        }
+        applyTheme(localStorage.getItem('pm-theme') === 'light');
+        if (themeBtn) {
+            themeBtn.addEventListener('click', () => applyTheme(!document.body.classList.contains('light')));
+        }
+
+        // --- SISTEM PAGINATION ULASAN ---
+        let reviewsList = [];
+        let currentPage = 1;
+        const itemsPerPage = 4; // Menampilkan maksimal 4 card per halaman
+
+        function initReviews() {
+            // Ambil data ulasan dari hidden div hasil render Jinja
+            const dataItems = document.querySelectorAll('.review-data-item');
+            dataItems.forEach(item => {
+                reviewsList.push({
+                    user: item.getAttribute('data-user'),
+                    skor: parseInt(item.getAttribute('data-skor')),
+                    komentar: item.getAttribute('data-komentar'),
+                    isNew: false
+                });
+            });
+            renderReviews();
+        }
+
+        function renderReviews() {
+            const grid = document.getElementById('review-grid');
+            grid.innerHTML = ''; // Clear container
+
+            const totalPages = Math.ceil(reviewsList.length / itemsPerPage) || 1;
+            
+            // Batasi currentPage agar tidak kelebihan
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+
+            const startIdx = (currentPage - 1) * itemsPerPage;
+            const endIdx = startIdx + itemsPerPage;
+            const currentReviews = reviewsList.slice(startIdx, endIdx);
+
+            currentReviews.forEach((u, idx) => {
+                let stars = '';
+                for(let i=0; i<u.skor; i++) stars += '⭐';
+                
+                const card = document.createElement('div');
+                card.className = `review-card active ${u.isNew ? 'review-new' : ''}`;
+                card.style.animationDelay = `${idx * 0.05}s`; // Efek muncul bergantian
+                card.innerHTML = `
+                    <p style="color:var(--text-secondary);font-style:italic;line-height:1.6;margin-bottom:12px;">"${u.komentar}"</p>
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:1px solid ${u.isNew ? 'rgba(99,102,241,0.15)' : 'var(--border-subtle)'};font-size:11px;">
+                        <span style="font-weight:700;color:${u.isNew ? 'var(--accent-indigo)' : 'var(--text-tertiary)'};">${u.user} ${u.isNew ? '<span style="color:var(--text-secondary);font-weight:500;">(baru)</span>' : ''}</span>
+                        <span style="color:var(--accent-amber);letter-spacing:1px;">${stars}</span>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+
+            // Update info halaman dan tombol
+            document.getElementById('review-page-info').innerText = `${currentPage} / ${totalPages}`;
+            document.getElementById('btn-prev-rev').disabled = currentPage === 1;
+            document.getElementById('btn-next-rev').disabled = currentPage === totalPages;
+        }
+
+        // Tombol Prev Next Pagination
+        document.getElementById('btn-prev-rev')?.addEventListener('click', () => {
+            if (currentPage > 1) { currentPage--; renderReviews(); }
+        });
+        document.getElementById('btn-next-rev')?.addEventListener('click', () => {
+            const totalPages = Math.ceil(reviewsList.length / itemsPerPage);
+            if (currentPage < totalPages) { currentPage++; renderReviews(); }
+        });
+
+        // FORM TAMBAH ULASAN
+        document.getElementById('btn-submit-review')?.addEventListener('click', function() {
+            const name = document.getElementById('rev-name').value.trim();
+            const score = parseInt(document.getElementById('rev-score').value);
+            const comment = document.getElementById('rev-comment').value.trim();
+
+            if (!name || !comment) return;
+
+            // Masukkan data baru ke paling depan array
+            reviewsList.unshift({
+                user: name,
+                skor: score,
+                komentar: comment,
+                isNew: true
+            });
+
+            // Tambah angka total pembaca
+            const totalElem = document.getElementById('total-pembaca');
+            if (totalElem) {
+                let current = parseInt(totalElem.innerText.replace(/,/g, ''));
+                totalElem.innerText = (current + 1).toLocaleString('en-US');
+            }
+
+            // Kosongkan form
+            document.getElementById('rev-name').value = '';
+            document.getElementById('rev-comment').value = '';
+
+            // Kembali ke halaman pertama dan render ulang
+            currentPage = 1;
+            renderReviews();
+        });
+
+        // Jalankan initial ulasan
+        initReviews();
+    </script>
+</body>
+</html>
