@@ -27,10 +27,16 @@ if not df.empty:
 else:
     similarity_score = None
 
-# Data Ulasan Awal untuk Dashboard Review Canvas
+# ==========================================
+# DATA ULASAN DUMMY (DITAMBAH AGAR BISA TEST PAGINATION)
+# ==========================================
 ulasan_dummy = [
     {"user": "Andi Saputra", "skor": 5, "komentar": "Alur ceritanya sangat menyentuh hati, penokohannya luar biasa!"},
-    {"user": "Siti Rahma", "skor": 4, "komentar": "Bahasanya puitis dan dalam. Sangat merekomendasikan buku ini."}
+    {"user": "Siti Rahma", "skor": 4, "komentar": "Bahasanya puitis dan dalam. Sangat merekomendasikan buku ini."},
+    {"user": "Budi Santoso", "skor": 5, "komentar": "Plot twist di akhir bener-bener bikin nggak nyangka. Keren abis!"},
+    {"user": "Clara", "skor": 4, "komentar": "Secara keseluruhan bagus, cuma di bagian pertengahan agak sedikit lambat alurnya."},
+    {"user": "Dika", "skor": 5, "komentar": "Wah ini sih mahakarya. Setiap babnya bikin penasaran buat lanjut baca terus."},
+    {"user": "Eka N.", "skor": 3, "komentar": "Cukup oke buat bacaan santai akhir pekan, lumayan menghibur."}
 ]
 
 def ambil_rekomendasi(judul_buku, k=4):
