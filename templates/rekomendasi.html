@@ -95,7 +95,7 @@
         .glass-panel { background: var(--bg-surface); backdrop-filter: var(--blur-panel); -webkit-backdrop-filter: var(--blur-panel); border: 1px solid var(--border-subtle); box-shadow: var(--panel-shadow); border-radius: 30px; transition: background 0.4s ease, border-color 0.3s ease; overflow: hidden; }
         .glass-inner { background: var(--bg-inner); backdrop-filter: blur(16px); border: 1px solid var(--border-subtle); border-radius: 20px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.05); }
 
-        /* ─── REVIEW GRID PAGINATION (BARU & LEBIH RAPI) ─── */
+        /* ─── REVIEW GRID PAGINATION ─── */
         .review-wrapper { width: 100%; position: relative; }
         .review-grid {
             display: grid;
@@ -107,9 +107,9 @@
         
         .review-card { 
             background: var(--bg-inner); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 12px; font-size: 12px; transition: background 0.4s ease; box-shadow: inset 0 1px 1px rgba(255,255,255,0.05); 
-            height: max-content; /* Fit text nicely */
-            word-break: break-word; /* Cegah meluber */
-            display: none; /* Disembunyikan dulu oleh JS */
+            height: max-content; 
+            word-break: break-word; 
+            display: none; 
         }
         
         /* Animasi Transisi Halaman Ulasan */
@@ -144,7 +144,7 @@
         .book-cover-sm::after { content:''; position:absolute; inset:0; background: linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 60%); }
         body.light .book-cover-sm::after { background: linear-gradient(to top, rgba(15, 23, 42, 0.3) 0%, transparent 60%); }
 
-        /* ─── SCROLL REVEAL (Diperbaiki agar repeat terus) ─── */
+        /* ─── SCROLL REVEAL ─── */
         .reveal, .reveal-left, .reveal-right, .reveal-scale { opacity: 0; transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
         .reveal { transform: translateY(40px); }
         .reveal-left { transform: translateX(-40px); }
@@ -247,7 +247,6 @@
         <div class="mesh-orb mesh-orb-3"></div>
     </div>
 
-    <!-- NAV -->
     <div style="position:sticky;top:16px;z-index:100;max-width:1100px;margin:16px auto 0;padding:0 16px; width: 100%;">
         <nav class="glass-nav" style="border-radius:var(--radius-nav);padding:10px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px;">
             <a href="/" style="font-size:20px;font-weight:900;text-decoration:none;color:var(--text-primary);letter-spacing:-0.03em;flex-shrink:0;">
@@ -255,7 +254,6 @@
             </a>
             
             <div style="display:flex;align-items:center;gap:12px;">
-                <!-- iOS Slide Toggle -->
                 <div class="theme-switch" id="theme-toggle" aria-label="Toggle theme">
                     <div class="theme-slider">
                         <svg id="moon-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -280,10 +278,8 @@
         </div>
         {% else %}
 
-        <!-- MAIN DETAIL GRID -->
         <div class="detail-grid" style="margin-bottom:0;">
 
-            <!-- LEFT PANEL: Book Info -->
             <div class="glass-panel reveal-left" style="padding:24px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:20px;">
                 <div class="book-cover-lg" style="margin:0 auto;">
                     <img src="{{ info.cover_url }}" alt="Cover {{ info.judul }}">
@@ -299,11 +295,9 @@
                 </div>
             </div>
 
-            <!-- RIGHT PANEL: Dashboard -->
             <div class="glass-panel reveal-right" style="padding:20px;display:flex;flex-direction:column;gap:20px;">
-                @media (min-width: 768px) { .glass-panel { padding: 24px; } }
+                <style>@media (min-width: 768px) { .glass-panel { padding: 24px !important; } }</style>
 
-                <!-- Dashboard Header -->
                 <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:16px;border-bottom:1px solid var(--border-subtle);">
                     <h3 style="font-size:14px;font-weight:800;color:var(--text-primary);display:flex;align-items:center;gap:8px;">
                         <span class="pulse-dot"></span>
@@ -312,7 +306,6 @@
                     <span class="badge-id">ID: 00{{ info.id }}</span>
                 </div>
 
-                <!-- Stats -->
                 <div class="stat-grid reveal delay-1">
                     <div class="stat-card">
                         <p class="stat-label">Rating</p>
@@ -331,7 +324,6 @@
                     </div>
                 </div>
 
-                <!-- Progress Bars -->
                 <div class="glass-inner reveal delay-2" style="padding:16px;">
                     <p style="font-size:10px;font-weight:800;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:12px;">Bobot Kriteria Buku</p>
 
@@ -356,11 +348,9 @@
                     </div>
                 </div>
 
-                <!-- CAROUSEL Reviews (Grid with Pagination) -->
                 <div class="reveal review-wrapper">
                     <p style="font-size:10px;font-weight:800;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:12px;">Ulasan Pengguna</p>
                     
-                    <!-- Container ulasan dibungkus Jinja -->
                     <div id="all-reviews-data" style="display: none;">
                         {% for u in ulasan %}
                         <div class="review-data-item" data-user="{{ u.user }}" data-skor="{{ u.skor }}" data-komentar="{{ u.komentar }}"></div>
@@ -368,10 +358,8 @@
                     </div>
 
                     <div id="review-grid" class="review-grid">
-                        <!-- Card ulasan akan dirender disini via JS -->
-                    </div>
+                        </div>
 
-                    <!-- Pagination Button -->
                     <div class="review-pagination">
                         <button id="btn-prev-rev" class="btn-page" disabled>← Prev</button>
                         <span id="review-page-info" class="page-info">1 / 1</span>
@@ -379,7 +367,6 @@
                     </div>
                 </div>
 
-                <!-- Review Form -->
                 <div style="border-top:1px solid var(--border-subtle);padding-top:16px;" class="reveal">
                     <p style="font-size:10px;font-weight:800;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent-indigo);margin-bottom:12px;">Tulis Ulasan Baru</p>
                     <div style="display:flex;flex-direction:column;gap:10px;">
@@ -405,7 +392,6 @@
 
         <div class="separator"></div>
 
-        <!-- RECOMMENDATION RESULTS -->
         <section class="reveal">
             <div class="section-label">
                 Hasil Pencarian Serupa
@@ -430,7 +416,6 @@
         {% endif %}
     </div>
 
-    <!-- FOOTER KELOMPOK -->
     <footer class="glass-footer">
         <div class="footer-content">
             <div class="footer-brand">
