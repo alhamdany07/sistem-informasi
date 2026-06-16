@@ -1,3 +1,4 @@
+import os
 from flask import Flask, render_template, request, redirect, url_for
 import pandas as pd
 from sklearn.feature_extraction.text import CountVectorizer
@@ -70,11 +71,13 @@ def rekomendasi(judul):
     info_buku = buku_terpilih.to_dict(orient='records')[0]
     
     # Bobot Canvas Dinamis Per Buku
-    buku_id = int(info_buku['id'])
+    buku_id = int(info_buku.get('id', 1)) # Pakai .get() jaga-jaga kalau ID kosong
     info_buku['plot_weight'] = 80 + (buku_id * 4) % 19
     info_buku['diksi_weight'] = 75 + (buku_id * 7) % 21
 
     return render_template('rekomendasi.html', judul_dicari=info_buku['judul'], info=info_buku, hasil=hasil_rekomendasi, ulasan=ulasan_dummy, error=False)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Modifikasi khusus untuk Render.com agar membaca PORT secara dinamis
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
