@@ -64,6 +64,7 @@
             color: var(--text-primary);
             min-height: 100vh;
             overflow-x: hidden;
+            width: 100%;
             transition: background 0.4s ease, color 0.4s ease;
             display: flex;
             flex-direction: column;
@@ -85,7 +86,8 @@
         @keyframes orb-float-3 { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(-60px, 30px) scale(0.95); } }
 
         /* ─── HERO BOOK ANIMATION ─── */
-        .hero-graphics { position: absolute; width: 100%; height: 100%; top: 0; left: 0; z-index: -1; pointer-events: none; }
+        /* PERBAIKAN: Ditambahkan overflow: hidden; di sini agar halamannya tidak bisa digeser ke samping */
+        .hero-graphics { position: absolute; width: 100%; height: 100%; top: 0; left: 0; z-index: -1; pointer-events: none; overflow: hidden; }
         .floating-book { position: absolute; color: var(--accent-indigo); opacity: 0.15; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.2)); transition: color 0.4s ease; }
         body.light .floating-book { opacity: 0.08; filter: drop-shadow(0 10px 20px rgba(79,70,229,0.2)); }
 
@@ -145,14 +147,13 @@
         @media (min-width: 768px) { .populer-section { padding: 32px; border-radius: 32px; } }
         body.light .populer-section { background: rgba(79,70,229,0.04); border-color: rgba(79,70,229,0.1); }
 
-        /* SCROLL ANIMATION - Dibuat agar trigger setiap kali masuk layar */
+        /* SCROLL ANIMATION */
         .reveal, .reveal-left, .reveal-scale { opacity: 0; transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
         .reveal { transform: translateY(50px); }
         .reveal-left { transform: translateX(-40px); }
         .reveal-scale { transform: scale(0.9) translateY(30px); }
         
         .reveal.in, .reveal-left.in, .reveal-scale.in { opacity: 1; transform: none; }
-        /* Hapus delay di grid agar scroll naik turun terasa serentak dan responsif */
 
         .text-hero {
             font-size: clamp(32px, 8vw, 68px);
@@ -210,7 +211,7 @@
         
         .content-wrapper { flex: 1; position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 32px 16px 60px; width: 100%; }
         @media (min-width: 768px) { .content-wrapper { padding: 48px 20px 80px; } }
-        html { scroll-behavior: smooth; }
+        html { scroll-behavior: smooth; overflow-x: hidden; } /* TAMBAHAN overflow-x: hidden DI SINI */
 
         /* ─── FOOTER STYLES ─── */
         .glass-footer {
@@ -250,21 +251,17 @@
         <div class="mesh-orb mesh-orb-3"></div>
     </div>
 
-    <!-- Floating Nav -->
     <div style="position:sticky;top:16px;z-index:100;max-width:1100px;margin:16px auto 0;padding:0 16px; width: 100%;">
         <nav class="glass-nav" style="border-radius:var(--radius-nav);padding:12px 20px;display:flex;justify-content:space-between;align-items:center;">
             <a href="/" style="font-size:20px;font-weight:900;text-decoration:none;color:var(--text-primary);letter-spacing:-0.03em;">
                 Pustaka<span style="color:var(--accent-indigo);">Match</span><span style="color:var(--accent-emerald);">.</span>
             </a>
             
-            <!-- iOS Slide Toggle -->
             <div class="theme-switch" id="theme-toggle" aria-label="Toggle theme">
                 <div class="theme-slider">
-                    <!-- Moon Icon (Dark Mode) -->
                     <svg id="moon-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
                     </svg>
-                    <!-- Sun Icon (Light Mode) -->
                     <svg id="sun-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m0 13.5V21M4.22 4.22l1.58 1.58m12.42 12.42l1.58 1.58M3 12h2.25m13.5 0H21M4.22 19.78l1.58-1.58M18.22 5.78l1.58-1.58M12 7.5a4.5 4.5 0 100 9 4.5 4.5 0 000-9z" />
                     </svg>
@@ -273,13 +270,10 @@
         </nav>
     </div>
 
-    <!-- Main Content -->
     <div class="content-wrapper">
 
-        <!-- Hero Header -->
         <header style="text-align:center;max-width:650px;margin:30px auto 60px; position:relative;" class="reveal">
             
-            <!-- Book Theme Animation Behind Text -->
             <div class="hero-graphics">
                 <svg class="floating-book fb-1" style="--rot:-15deg;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
@@ -292,7 +286,6 @@
                 </svg>
             </div>
 
-            <!-- Teks Hero yang Baru -->
             <div class="badge-pill" style="margin-bottom:24px;">
                 <span class="pulse-dot"></span>
                 Sistem Pencocokan Genre
@@ -305,7 +298,6 @@
             </p>
         </header>
 
-        <!-- SECTION: TERPOPULER -->
         <section class="populer-section reveal">
             <div class="section-label">
                 <span class="bar bar-indigo"></span>
@@ -331,7 +323,6 @@
 
         <div class="separator"></div>
 
-        <!-- SECTION: KATALOG UTAMA -->
         <section>
             <div class="section-label reveal-left">
                 <span class="bar bar-emerald"></span>
@@ -357,7 +348,6 @@
 
     </div>
 
-    <!-- FOOTER KELOMPOK -->
     <footer class="glass-footer">
         <div class="footer-content">
             <div class="footer-brand">
@@ -392,17 +382,14 @@
     </footer>
 
     <script>
-        // PERBAIKAN ANIMASI SCROLL AGAR SELALU REPEAT SAAT NAIK/TURUN
         function initReveal() {
             const els = document.querySelectorAll('.reveal, .reveal-left, .reveal-scale');
             const io = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
                     const el = entry.target;
-                    // Jika elemen masuk ke layar, tambah class 'in' untuk menjalankan animasi
                     if (entry.isIntersecting) {
                         el.classList.add('in');
                     } else {
-                        // Jika keluar layar, hapus class 'in' agar siap dianimasikan ulang saat discroll lagi
                         el.classList.remove('in');
                     }
                 });
